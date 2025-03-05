@@ -1,4 +1,4 @@
-package com.example.GreetingsApp.DTOs;
+package com.example.GreetingApp.DTOs;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,4 +25,3 @@ public class AuthUserDTO {
             message = "Password must contain 1 uppercase, 1 special character, 1 digit, and be at least 8 characters long")
     private String password;
 }
-
