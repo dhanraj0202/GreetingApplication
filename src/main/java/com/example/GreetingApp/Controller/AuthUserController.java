@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,15 +26,49 @@ public class AuthUserController {
     // Login User and Generate JWT Token
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
-        String token = authenticationService.authenticateUser(
-                request.get("email"),
-                request.get("password")
-        );
+        String email = request.get("email");
+        String password = request.get("password");
 
-        if (token.equals("User not found!") || token.equals("Invalid email or password!")) {
-            return ResponseEntity.status(401).body(Map.of("error", token));
+        if (email == null || password == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email and password are required!"));
+        }
+
+        String token = authenticationService.authenticateUser(email, password);
+
+        if ("User not found!".equals(token)) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found!"));
+        } else if ("Invalid email or password!".equals(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password!"));
         }
 
         return ResponseEntity.ok(Map.of("message", "Login successful!", "token", token));
+    }
+
+    // Forgot Password - Reset password if user forgets it
+    @PutMapping("/forgotPassword/{email}")
+    public ResponseEntity<?> forgotPassword(@PathVariable String email, @RequestBody Map<String, String> request) {
+        String newPassword = request.get("password");
+
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password is required!"));
+        }
+
+        String response = authenticationService.forgotPassword(email, newPassword);
+        return ResponseEntity.ok(Collections.singletonMap("message", response));
+    }
+
+    // Reset Password - Logged-in user can change password
+    @PutMapping("/resetPassword")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String currentPassword = request.get("currentPassword");
+        String newPassword = request.get("newPassword");
+
+        if (email == null || currentPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email, current password, and new password are required!"));
+        }
+
+        String response = authenticationService.resetPassword(email, currentPassword, newPassword);
+        return ResponseEntity.ok(Collections.singletonMap("message", response));
     }
 }
